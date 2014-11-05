@@ -4,6 +4,8 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.vli.handlers.CustInput;
+import com.vli.handlers.CustInputProcessor;
 import com.vli.handlers.GameStateManager;
 
 
@@ -18,6 +20,9 @@ public class Jumper extends Game{
 	
 	@Override
 	public void create() {
+		
+		Gdx.input.setInputProcessor(new CustInputProcessor());
+		
 		this.batch = new SpriteBatch();
 		
 		this.cam = new OrthographicCamera();
@@ -36,6 +41,7 @@ public class Jumper extends Game{
 			this.accum -= this.FPS_STEP;
 			this.gsm.update(FPS_STEP);
 			this.gsm.render();
+			CustInput.update();
 		}
 	}
 	

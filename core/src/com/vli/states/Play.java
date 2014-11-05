@@ -17,6 +17,7 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.vli.handlers.B2DVars;
 import com.vli.handlers.CustContactListenner;
+import com.vli.handlers.CustInput;
 import com.vli.handlers.GameStateManager;
 
 
@@ -29,6 +30,8 @@ public class Play extends GameState {
 	private BodyDef bDef;
 	private Body body;
 	private FixtureDef fixtureDef;
+	private Body playerBody;
+	private CustContactListenner cl;
 	
 	private OrthographicCamera box2dCam;
 	
@@ -38,7 +41,7 @@ public class Play extends GameState {
 		
 		this.world = new World(new Vector2(0, -9.81f), true);
 		this.b2DRender = new Box2DDebugRenderer();
-		world.setContactListener(new CustContactListenner());
+		world.setContactListener(cl = new CustContactListenner());
 		
 		
 		this.bDef = new BodyDef();
@@ -52,7 +55,7 @@ public class Play extends GameState {
 		
 		this.fixtureDef.shape = shape;
 		fixtureDef.filter.categoryBits = B2DVars.BIT_GROUND;
-		fixtureDef.filter.maskBits = B2DVars.BIT_BOX | B2DVars.BIT_BALL;
+		fixtureDef.filter.maskBits = B2DVars.BIT_PLAYER;
 		
 		Fixture fix = body.createFixture(fixtureDef);
 		fix.setUserData("ground");
@@ -64,27 +67,22 @@ public class Play extends GameState {
 		
 		bDef.position.set(200/PPM, 300/PPM);
 		bDef.type = BodyType.DynamicBody;
-		this.body = this.world.createBody(this.bDef);
+		playerBody = this.world.createBody(this.bDef);
 		
 		shape.setAsBox(10/PPM, 10/PPM);
 		fixtureDef.shape = shape;
-		fixtureDef.restitution = 0.99f;
-		fixtureDef.filter.categoryBits = B2DVars.BIT_BOX;
+		fixtureDef.filter.categoryBits = B2DVars.BIT_PLAYER;
 		fixtureDef.filter.maskBits = B2DVars.BIT_GROUND;
-		fix = body.createFixture(fixtureDef);
-		fix.setUserData("box");
-		
-		
-		bDef.position.set(220/PPM, 200/PPM);
-		body = world.createBody(bDef);
-		CircleShape cShape = new CircleShape();
-		cShape.setRadius(25/PPM);
-		fixtureDef.shape = cShape;
-		fixtureDef.filter.categoryBits = B2DVars.BIT_BALL;
+		fix = playerBody.createFixture(fixtureDef);
+		fix.setUserData("player");
+
+		// foot sensor
+		shape.setAsBox(4/PPM, 4/PPM, new Vector2(0, -8/PPM), 0);
+		fixtureDef.shape = shape;
+		fixtureDef.filter.categoryBits = B2DVars.BIT_PLAYER;
 		fixtureDef.filter.maskBits = B2DVars.BIT_GROUND;
-		fix = body.createFixture(fixtureDef);
-		fix.setUserData("ball");
-		
+		fixtureDef.isSensor = true;
+		playerBody.createFixture(fixtureDef).setUserData("foot");
 		
 		this.box2dCam = new OrthographicCamera();
 		this.box2dCam.setToOrtho(false, Gdx.graphics.getWidth()/PPM, Gdx.graphics.getHeight()/PPM);
@@ -93,11 +91,17 @@ public class Play extends GameState {
 
 	@Override
 	public void handleInput() {
-
+		if(CustInput.isPressed(CustInput.BT1)){
+			if(cl.isPlayerOnGround()){
+				playerBody.applyForceToCenter(0, 210, true);
+			}
+		}
 	}
 
 	@Override
 	public void update(float delta) {
+		
+		handleInput();
 		
 		world.step(delta, 6, 2);
 		
